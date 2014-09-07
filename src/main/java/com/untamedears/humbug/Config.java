@@ -32,30 +32,29 @@ public class Config {
   private static final String find_end_portals_ = null;
   private static final int projectile_slow_ticks_ = 100;
   private static final int loot_multiplier_ = 1;
-  private static final String book_name_ = "A Guide to Civcraft";
-  private static final String book_author_ = "dydomite";
+  private static final String book_name_ = "A Guide to Bergecraft";
+  private static final String book_author_ = "berge403";
   private static final String book_text_ =
-      "    {|oWhat is CivCraft?\n"
-      + "\"Civcraft is an experiment for communities & political ideologies [...] to work together to create and shape civilization or to watch it fall\"{|r\n"
-      + "-Ttk2, server owner\n}|"
-      + "    {|oWhat is CivCraft?{|r\n"
+      "    {|oWhat is BergeCraft?\n"
+      + "\"Bergecraft is a think tank iterative test server [...] with a twist\"{|r\n"
+      + "-berge403, server owner\n}|"
+      + "    {|oWhat is BergeCraft?{|r\n"
       + "{|lNOT just survival{|r Admins are hands-off and only handle glitches and hackers\n"
       + "{|lNOT just chaos{|r Mods allow players and towns to enforce their own rules\n"
       + "{|lNOT just roleplay{|r Nobody pretends -- conflict is genuine and heated\n}|"
       + "    {|oBasic Mechanics{|r\n"
-      + "-The world is a circle\n"
-      + "-Stretches 15k blocks\n"
+      + "-The world is a square\n"
+      + "-Stretches 6k blocks across\n"
       + "-500 block chat range\n"
       + "-Respawn in random area unless you sleep\n"
-      + "-Food grows slowly\n"
-      + "-Mobs spawn sparsely\n"
-      + "-No Nether portals\n"
-      + "-Nether biomes instead\n"
-      + "-No XP from killing\n}|"
-      + "   {|oCivCraft Mods{|r\n"
+      + "-Mobs spawn profusely\n"
+      + "-1:1 Nether\n}|"
+      + "   {|oBergeCraft Mods{|r\n"
       + "{|lCitadel{|r: Reinforces things so it takes numerous breaks to destroy them. Locks some things too.\n"
       + "{|lMore Info:{|r {|oVisual Guide:{|r imgur.com/BnlL2 {|oWiki Page:{|r tinyurl.com/citadelmod\n"
       + "{|oType \"/help citadel\" in chat to get commands\n}|"
+      + "   {|lExtra Hard Mode{|r: Increases mob difficulty, increases environmental damage, and removes branch mining\n"
+      + "{|lMore Info:{|r {|oWiki Page:{|r http://di3mex.github.io/ExtraHardMode/ \n}|"
       + "   {|lPrison Pearl{|r: Ender Pearls trap players in the end. Others can steal back your pearl and free you -- you always know where it is so they cannot hide it\n"
       + "{|lMore Info:{|r {|oVisual Guide:{|r imgur.com/XbhkK {|oWiki Page:{|r tinyurl.com/prisperl\n}|"
       + "   {|lJuke Alert{|r: Creates 'Juke' blocks that record player activity in radius. If you steal, grief, or trespass -- people will know about it & put a bounty for you to be pearled.\n"
@@ -66,14 +65,9 @@ public class Config {
       + "{|lMore Info:{|r {|oWiki Page:{|r tinyurl.com/itemxchng\n}|"
       + "   {|lHumbug:{|r Disables some features of minecraft -- see wiki for short list. Please read it to ensure you don't waste resources on a useless block.\n"
       + "{|lMore Info:{|r {|oWiki Page:{|r tinyurl.com/humbugwiki\n}|"
-      + "   {|lFactory Mod{|r: Factories are hard to create but can mass produce goods for cheaper. Gives groups gear advantages over lone wolves. Trading may be cheaper than crafting due to this.\n"
-      + "{|lMore Info:{|r {|oWiki Page:{|r tinyurl.com/factorymod\n}|"
-      + "   {|lRealistic Biomes{|r: Biomes are huge, crops grow different in different biomes. Hit ground with seed to see growth rate. Farms need sunlight. Crops grow with nobody around.\n"
-      + "{|lMore Info:{|r {|oWiki Page:{|r tinyurl.com/realbiome\n}|"
       + "   {|oFurther Info{|r\n"
-      + "Visit our subreddit at: {|oreddit.com/r/civcraft{|r\n"
-      + "Visit the unofficial wiki: {|oCivCraft.org{|r\n"
-      + "Both have player made guides on other mods, towns, and general tips";
+      + "Visit our subreddit at: {|oreddit.com/r/bergecraft{|r\n"
+      + "Has player made guides on other mods, towns, and general tips";
   private static final Iterable<String> compiled_book_text_ =
       Splitter.on("}|").split(book_text_.replaceAll("\\{\\|", "\u00A7"));
 

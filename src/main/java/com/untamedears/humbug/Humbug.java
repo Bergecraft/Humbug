@@ -107,7 +107,7 @@ import com.untamedears.humbug.annotations.BahHumbugs;
 import com.untamedears.humbug.annotations.ConfigOption;
 import com.untamedears.humbug.annotations.OptType;
 import com.untamedears.humbug.Config;
-import com.untamedears.humbug.CustomNMSItemEnderPearl;
+//import com.untamedears.humbug.CustomNMSItemEnderPearl;
 
 public class Humbug extends JavaPlugin implements Listener {
   public static void severe(String message) {
@@ -854,6 +854,7 @@ public class Humbug extends JavaPlugin implements Listener {
       ItemStack resulting_item = recipe.getResult();
       if ( // !ench_gold_app_craftable_ &&
           isEnchantedGoldenApple(resulting_item)) {
+          info("Removing Recipe: "+resulting_item);
         it.remove();
         info("Enchanted Golden Apple Recipe disabled");
       }
@@ -1333,7 +1334,7 @@ public class Humbug extends JavaPlugin implements Listener {
 
   @BahHumbugs ({
     @BahHumbug(opt="nerf_strength", def="true"),
-    @BahHumbug(opt="strength_multiplier", type=OptType.Int, def="3")
+    @BahHumbug(opt="strength_multiplier", type=OptType.Double, def="3")
   })
   @EventHandler(priority = EventPriority.LOWEST, ignoreCancelled = true)
   public void onPlayerDamage(EntityDamageByEntityEvent event) {
@@ -1344,7 +1345,7 @@ public class Humbug extends JavaPlugin implements Listener {
       return;
     }
     Player player = (Player)event.getDamager();
-    final int strengthMultiplier = config_.get("strength_multiplier").getInt();
+    final double strengthMultiplier = config_.get("strength_multiplier").getDouble();
     if (player.hasPotionEffect(PotionEffectType.INCREASE_DAMAGE)) {
       for (PotionEffect effect : player.getActivePotionEffects()) {
         if (effect.getType().equals(PotionEffectType.INCREASE_DAMAGE)) {
@@ -1839,48 +1840,69 @@ public class Humbug extends JavaPlugin implements Listener {
     }, 2L);
   }
 
-  // ================================================
-  // Adjust ender pearl gravity
-
-  @SuppressWarnings({ "rawtypes", "unchecked" })
-  @BahHumbug(opt="ender_pearl_gravity", type=OptType.Double, def="0.060000")
-  public void hookEnderPearls() {
-    Item.REGISTRY.a(256 + 112, "enderPearl", new CustomNMSItemEnderPearl(config_));
-    try {
-      // They thought they could stop us by preventing us from registering an
-      // item. We'll show them
-      Field fieldStringToClass = EntityTypes.class.getDeclaredField("c");
-      Field fieldClassToString = EntityTypes.class.getDeclaredField("d");
-      fieldStringToClass.setAccessible(true);
-      fieldClassToString.setAccessible(true);
-      
-      Field fieldClassToId = EntityTypes.class.getDeclaredField("f");
-      Field fieldStringToId = EntityTypes.class.getDeclaredField("g");
-      fieldClassToId.setAccessible(true);
-      fieldStringToId.setAccessible(true);
-      
-      Map mapStringToClass = (Map)fieldStringToClass.get(null);
-      Map mapClassToString = (Map)fieldClassToString.get(null);
-      
-      Map mapClassToId = (Map)fieldClassToId.get(null);
-      Map mapStringToId = (Map)fieldStringToId.get(null);
-      
-      mapStringToClass.put("ThrownEnderpearl",CustomNMSEntityEnderPearl.class);
-      mapStringToId.put("ThrownEnderpearl", Integer.valueOf(14));
-      
-      mapClassToString.put(CustomNMSEntityEnderPearl.class, "ThrownEnderpearl");
-      mapClassToId.put(CustomNMSEntityEnderPearl.class, Integer.valueOf(14));
-      
-      fieldStringToClass.set(null, mapStringToClass);
-      fieldClassToString.set(null, mapClassToString);
-      
-      fieldClassToId.set(null, mapClassToId);
-      fieldStringToId.set(null, mapStringToId);
-    } catch (Exception e) {
-      Humbug.severe("Exception while overriding MC's ender pearl class");
-      e.printStackTrace();
-    }
-  }
+	// -------------------------------------------- //
+	//OBSIDIAN GENERATORS
+	//-------------------------------------------- //
+	
+	@SuppressWarnings("deprecation")
+	 @BahHumbug(opt="disable_obsidian_generators", def="true")
+	@EventHandler(priority = EventPriority.NORMAL, ignoreCancelled = true)
+	public void obsidianGenerators(BlockFromToEvent event)
+	{
+	    if (!config_.get("disable_obsidian_generators").getBool()) {
+	        return;
+	      }
+		//thanks to ObGenBlocker and WorldGuard for this method
+		Block block = event.getToBlock();
+		int source = event.getBlock().getTypeId();
+		int target = block.getTypeId();
+		if ((target == 55 || target == 132) && (source == 0 || source == 10 || source == 11))
+		{
+		block.setType(Material.AIR);
+		}
+	}
+//  // ================================================
+//  // Adjust ender pearl gravity
+//
+//  @SuppressWarnings({ "rawtypes", "unchecked" })
+//  @BahHumbug(opt="ender_pearl_gravity", type=OptType.Double, def="0.060000")
+//  public void hookEnderPearls() {
+//    Item.REGISTRY.a(256 + 112, "enderPearl", new CustomNMSItemEnderPearl(config_));
+//    try {
+//      // They thought they could stop us by preventing us from registering an
+//      // item. We'll show them
+//      Field fieldStringToClass = EntityTypes.class.getDeclaredField("c");
+//      Field fieldClassToString = EntityTypes.class.getDeclaredField("d");
+//      fieldStringToClass.setAccessible(true);
+//      fieldClassToString.setAccessible(true);
+//      
+//      Field fieldClassToId = EntityTypes.class.getDeclaredField("f");
+//      Field fieldStringToId = EntityTypes.class.getDeclaredField("g");
+//      fieldClassToId.setAccessible(true);
+//      fieldStringToId.setAccessible(true);
+//      
+//      Map mapStringToClass = (Map)fieldStringToClass.get(null);
+//      Map mapClassToString = (Map)fieldClassToString.get(null);
+//      
+//      Map mapClassToId = (Map)fieldClassToId.get(null);
+//      Map mapStringToId = (Map)fieldStringToId.get(null);
+//      
+//      mapStringToClass.put("ThrownEnderpearl",CustomNMSEntityEnderPearl.class);
+//      mapStringToId.put("ThrownEnderpearl", Integer.valueOf(14));
+//      
+//      mapClassToString.put(CustomNMSEntityEnderPearl.class, "ThrownEnderpearl");
+//      mapClassToId.put(CustomNMSEntityEnderPearl.class, Integer.valueOf(14));
+//      
+//      fieldStringToClass.set(null, mapStringToClass);
+//      fieldClassToString.set(null, mapClassToString);
+//      
+//      fieldClassToId.set(null, mapClassToId);
+//      fieldStringToId.set(null, mapStringToId);
+//    } catch (Exception e) {
+//      Humbug.severe("Exception while overriding MC's ender pearl class");
+//      e.printStackTrace();
+//    }
+//  }
 
   // ================================================
   // General
@@ -1888,7 +1910,7 @@ public class Humbug extends JavaPlugin implements Listener {
   public void onLoad()
   {
     loadConfiguration();
-    hookEnderPearls();
+//    hookEnderPearls();
     info("Loaded");
   }
 

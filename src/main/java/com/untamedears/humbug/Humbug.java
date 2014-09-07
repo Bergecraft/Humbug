@@ -13,9 +13,6 @@ import java.util.TreeMap;
 import java.util.TreeSet;
 import java.util.logging.Logger;
 
-import net.minecraft.server.v1_7_R1.EntityTypes;
-import net.minecraft.server.v1_7_R1.Item;
-
 
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;

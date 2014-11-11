@@ -3,6 +3,7 @@ package com.untamedears.humbug;
 import java.lang.reflect.Method;
 import java.lang.reflect.Field;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
@@ -25,6 +26,7 @@ import org.bukkit.block.Biome;
 import org.bukkit.block.Block;
 import org.bukkit.block.BlockFace;
 import org.bukkit.block.BlockState;
+import org.bukkit.block.Hopper;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
 import org.bukkit.command.ConsoleCommandSender;
@@ -56,6 +58,7 @@ import org.bukkit.event.block.BlockPlaceEvent;
 import org.bukkit.event.enchantment.EnchantItemEvent;
 import org.bukkit.event.enchantment.PrepareItemEnchantEvent;
 import org.bukkit.event.entity.CreatureSpawnEvent;
+import org.bukkit.entity.Arrow;
 import org.bukkit.event.entity.EntityChangeBlockEvent;
 import org.bukkit.event.entity.EntityCreatePortalEvent;
 import org.bukkit.event.entity.EntityDamageByEntityEvent;
@@ -64,14 +67,17 @@ import org.bukkit.event.entity.EntityDeathEvent;
 import org.bukkit.event.entity.EntityExplodeEvent;
 import org.bukkit.event.entity.EntityShootBowEvent;
 import org.bukkit.event.entity.ExpBottleEvent;
+import org.bukkit.event.entity.FoodLevelChangeEvent;
 import org.bukkit.event.entity.PlayerDeathEvent;
 import org.bukkit.event.entity.PotionSplashEvent;
 import org.bukkit.event.entity.SheepDyeWoolEvent;
+import org.bukkit.event.inventory.InventoryMoveItemEvent;
 import org.bukkit.event.inventory.InventoryOpenEvent;
 import org.bukkit.event.player.PlayerBucketEmptyEvent;
 import org.bukkit.event.player.PlayerExpChangeEvent;
 import org.bukkit.event.player.PlayerInteractEntityEvent;
 import org.bukkit.event.player.PlayerInteractEvent;
+import org.bukkit.event.player.PlayerItemConsumeEvent;
 import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.player.PlayerKickEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
@@ -84,6 +90,7 @@ import org.bukkit.event.vehicle.VehicleExitEvent;
 import org.bukkit.event.vehicle.VehicleMoveEvent;
 import org.bukkit.event.world.ChunkLoadEvent;
 import org.bukkit.event.world.PortalCreateEvent;
+import org.bukkit.event.world.StructureGrowEvent;
 import org.bukkit.inventory.EntityEquipment;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.InventoryHolder;
@@ -175,6 +182,27 @@ public class Humbug extends JavaPlugin implements Listener {
   public void onDyeWool(SheepDyeWoolEvent event) {
     if (!config_.get("allow_dye_sheep").getBool()) {
       event.setCancelled(true);
+    }
+  }
+
+  // ================================================
+  // Configurable bow buff
+
+  @BahHumbug(opt="bow_buff", type=OptType.Double, def="1.000000")
+  @EventHandler
+  public void onArrowHitEntity(EntityDamageByEntityEvent event) {
+    Double multiplier = config_.get("bow_buff").getDouble();
+    if(multiplier <= 1.000001 && multiplier >= 0.999999) {
+      return;
+    }
+
+    if (event.getEntity() instanceof LivingEntity) {
+      Entity damager = event.getDamager();
+      if (damager instanceof Arrow) {
+        Arrow arrow = (Arrow) event.getDamager();
+        LivingEntity shooter = arrow.getShooter();
+        event.setDamage(event.getDamage() * config_.get("bow_buff").getDouble());
+      }
     }
   }
 
@@ -1103,6 +1131,28 @@ public class Humbug extends JavaPlugin implements Listener {
     }
   }
 
+  //=================================================
+  // Combat Tag players on server join
+
+  @BahHumbug(opt="tag_on_join", def="true")
+  @EventHandler
+  public void tagOnJoin(PlayerJoinEvent event){
+    if(!config_.get("tag_on_join").getBool()) {
+      return;
+    }
+    // Delay two ticks to tag after secure login has been denied.
+    // This opens a 1 tick window for a cheater to login and grab
+    // server info, which should be detectable and bannable.
+    final Player loginPlayer = event.getPlayer();
+    Bukkit.getScheduler().runTaskLater(this, new Runnable() {
+      @Override
+      public void run() {
+        combatTag_.tagPlayer(loginPlayer.getName());
+        loginPlayer.sendMessage("You have been Combat Tagged on Login");
+      }
+    }, 2L);
+  }
+
   //================================================
   // Give introduction book to n00bs
 
@@ -1372,10 +1422,12 @@ public class Humbug extends JavaPlugin implements Listener {
     }
     for (LivingEntity entity : event.getAffectedEntities()) {
       if (entity instanceof Player) {
-        final double newHealth = Math.min(
+        if(((Damageable)entity).getHealth() > 0d) {
+          final double newHealth = Math.min(
             ((Damageable)entity).getHealth() + 4.0D,
             ((Damageable)entity).getMaxHealth());
-        entity.setHealth(newHealth);
+          entity.setHealth(newHealth);
+        }
       }
     }
   }
@@ -1576,6 +1628,23 @@ public class Humbug extends JavaPlugin implements Listener {
   }
 
   // ================================================
+  // Disable outbound hopper transfers
+
+  @BahHumbug(opt="disable_hopper_out_transfers", def="false")
+  @EventHandler(priority = EventPriority.LOWEST, ignoreCancelled = true)
+  public void onInventoryMoveItem(InventoryMoveItemEvent event) {
+    if (!config_.get("disable_hopper_out_transfers").getBool()) {
+      return;
+    }
+    final Inventory src = event.getSource();
+    final InventoryHolder srcHolder = src.getHolder();
+    if (srcHolder instanceof Hopper) {
+      event.setCancelled(true);
+      return;
+    }
+  }
+
+  // ================================================
   // Adjust horse speeds
 
   @BahHumbug(opt="horse_speed", type=OptType.Double, def="0.170000")
@@ -1601,7 +1670,7 @@ public class Humbug extends JavaPlugin implements Listener {
     }
     final Inventory pl_inv = player.getInventory();
     final Inventory inv = Bukkit.createInventory(
-        admin, 36, "Player inventory: " + playerName);
+        admin, 36, playerName + "'s Inventory");
     for (int slot = 0; slot < 36; slot++) {
       final ItemStack it = pl_inv.getItem(slot);
       inv.setItem(slot, it);
@@ -1639,6 +1708,7 @@ public class Humbug extends JavaPlugin implements Listener {
         "Player '%s' kicked for self damaging boat at %s",
         player.getName(), vehicle.getLocation().toString()));
     vehicle.eject();
+    vehicle.getWorld().dropItem(vehicle.getLocation(), new ItemStack(Material.BOAT));
     vehicle.remove();
     ((Player)passenger).kickPlayer("Nope");
   }
@@ -1666,6 +1736,7 @@ public class Humbug extends JavaPlugin implements Listener {
         "Player '%s' removed from land-boat at %s",
         ((Player)passenger).getName(), to.toString()));
     vehicle.eject();
+    vehicle.getWorld().dropItem(vehicle.getLocation(), new ItemStack(Material.BOAT));
     vehicle.remove();
   }
 
@@ -1763,9 +1834,13 @@ public class Humbug extends JavaPlugin implements Listener {
     if (!config_.get("fix_vehicle_logout_bug").getBool()) {
       return;
     }
-    Player player = event.getPlayer();
+    kickPlayerFromVehicle(event.getPlayer());
+  }
+
+  public void kickPlayerFromVehicle(Player player) {
     Entity vehicle = player.getVehicle();
-    if (vehicle == null || !(vehicle instanceof Minecart)) {
+    if (vehicle == null
+        || !(vehicle instanceof Minecart || vehicle instanceof Horse)) {
       return;
     }
     Location vehicleLoc = vehicle.getLocation();
@@ -1814,7 +1889,7 @@ public class Humbug extends JavaPlugin implements Listener {
       return;
     }
     final Vehicle vehicle = event.getVehicle();
-    if (vehicle == null || !(vehicle instanceof Minecart)) {
+    if (vehicle == null || !(vehicle instanceof Minecart || vehicle instanceof Horse)) {
       return;
     }
     final Entity passengerEntity = vehicle.getPassenger();
@@ -1904,12 +1979,161 @@ public class Humbug extends JavaPlugin implements Listener {
   // ================================================
   // General
 
-  public void onLoad()
-  {
-    loadConfiguration();
-//    hookEnderPearls();
-    info("Loaded");
+  // ================================================
+  // Hunger Changes
+
+  // Keep track if the player just ate.
+  private Map<Player, Double> playerLastEat_ = new HashMap<Player, Double>();
+
+  @BahHumbug(opt="saturation_multiplier", type=OptType.Double, def="0.0")
+  @EventHandler
+  public void setSaturationOnFoodEat(PlayerItemConsumeEvent event) {
+    // Each food sets a different saturation.
+    final Player player = event.getPlayer();
+    ItemStack item = event.getItem();
+    Material mat = item.getType();
+    double multiplier = config_.get("saturation_multiplier").getDouble();
+    if (multiplier <= 0.000001 && multiplier >= -0.000001) {
+      return;
+    }
+    switch(mat) {
+      case APPLE:
+        playerLastEat_.put(player, multiplier*2.4);
+      case BAKED_POTATO:
+        playerLastEat_.put(player, multiplier*7.2);
+      case BREAD:
+        playerLastEat_.put(player, multiplier*6);
+      case CAKE:
+        playerLastEat_.put(player, multiplier*0.4);
+      case CARROT_ITEM:
+        playerLastEat_.put(player, multiplier*4.8);
+      case COOKED_FISH:
+        playerLastEat_.put(player, multiplier*6);
+      case GRILLED_PORK:
+        playerLastEat_.put(player, multiplier*12.8);
+      case COOKIE:
+        playerLastEat_.put(player, multiplier*0.4);
+      case GOLDEN_APPLE:
+        playerLastEat_.put(player, multiplier*9.6);
+      case GOLDEN_CARROT:
+        playerLastEat_.put(player, multiplier*14.4);
+      case MELON:
+        playerLastEat_.put(player, multiplier*1.2);
+      case MUSHROOM_SOUP:
+        playerLastEat_.put(player, multiplier*7.2);
+      case POISONOUS_POTATO:
+        playerLastEat_.put(player, multiplier*1.2);
+      case POTATO:
+        playerLastEat_.put(player, multiplier*0.6);
+      case RAW_FISH:
+        playerLastEat_.put(player, multiplier*1);
+      case PUMPKIN_PIE:
+        playerLastEat_.put(player, multiplier*4.8);
+      case RAW_BEEF:
+        playerLastEat_.put(player,  multiplier*1.8);
+      case RAW_CHICKEN:
+        playerLastEat_.put(player, multiplier*1.2);
+      case PORK:
+        playerLastEat_.put(player,  multiplier*1.8);
+      case ROTTEN_FLESH:
+        playerLastEat_.put(player, multiplier*0.8);
+      case SPIDER_EYE:
+        playerLastEat_.put(player, multiplier*3.2);
+      case COOKED_BEEF:
+        playerLastEat_.put(player, multiplier*12.8);
+      default:
+        playerLastEat_.put(player, multiplier);
+        Bukkit.getServer().getScheduler().runTaskLater(this, new Runnable() {
+          // In case the player ingested a potion, this removes the
+          // saturation from the list. Unsure if I have every item
+          // listed. There is always the other cases of like food
+          // that shares same id
+          @Override
+          public void run() {
+            playerLastEat_.remove(player);
+          }
+        }, 80);
+    }
   }
+
+  @BahHumbug(opt="hunger_slowdown", type=OptType.Double, def="0.0")
+  @EventHandler
+  public void onFoodLevelChange(FoodLevelChangeEvent event) {
+    final Player player = (Player) event.getEntity();
+    final double mod = config_.get("hunger_slowdown").getDouble();
+    Double saturation;
+    if (playerLastEat_.containsKey(player)) { // if the player just ate
+      saturation = playerLastEat_.get(player);
+      if (saturation == null) {
+        saturation = ((Float)player.getSaturation()).doubleValue();
+      }
+    } else {
+      saturation = Math.min(
+          player.getSaturation() + mod,
+          20.0D + (mod * 2.0D));
+    }
+    player.setSaturation(saturation.floatValue());
+  }
+
+  //=================================================
+  //Remove Book Copying
+  @BahHumbug(opt="copy_book_enable", def= "false")
+  public void removeBooks() {
+    if (config_.get("copy_book_enable").getBool()) {
+      return;
+    }
+    Iterator<Recipe> it = getServer().recipeIterator();
+    while (it.hasNext()) {
+      Recipe recipe = it.next();
+      ItemStack resulting_item = recipe.getResult();
+      if ( // !copy_book_enable_ &&
+          isWrittenBook(resulting_item)) {
+        it.remove();
+        info("Copying Books disabled");
+      }
+    }
+  }
+  
+  public boolean isWrittenBook(ItemStack item) {
+    if (item == null) {
+      return false;
+    }
+    Material material = item.getType();
+    return material.equals(Material.WRITTEN_BOOK);
+  }
+
+  // ================================================
+  // Prevent tree growth wrap-around
+
+  @BahHumbug(opt="prevent_tree_wraparound", def="true")
+  @EventHandler(priority=EventPriority.LOWEST, ignoreCancelled = true)
+  public void onStructureGrowEvent(StructureGrowEvent event) {
+    if (!config_.get("prevent_tree_wraparound").getBool()) {
+      return;
+    }
+    int maxY = 0, minY = 257;
+    for (BlockState bs : event.getBlocks()) {
+      final int y = bs.getLocation().getBlockY();
+      maxY = Math.max(maxY, y);
+      minY = Math.min(minY, y);
+    }
+    if (maxY - minY > 240) {
+      event.setCancelled(true);
+      final Location loc = event.getLocation();
+      info(String.format("Prevented structure wrap-around at %d, %d, %d",
+          loc.getBlockX(), loc.getBlockY(), loc.getBlockZ()));
+    }
+  }
+
+  // ================================================
+  // General
+
+
+
+
+
+
+
 
   public void onEnable() {
     registerEvents();
@@ -1917,6 +2141,16 @@ public class Humbug extends JavaPlugin implements Listener {
     removeRecipies();
     global_instance_ = this;
     info("Enabled");
+  }
+  
+  public void onDisable() {
+    if (config_.get("fix_vehicle_logout_bug").getBool()) {
+      for (World world: getServer().getWorlds()) {
+        for (Player player: world.getPlayers()) {
+          kickPlayerFromVehicle(player);
+        }
+      }
+    }
   }
 
   public boolean isInitiaized() {

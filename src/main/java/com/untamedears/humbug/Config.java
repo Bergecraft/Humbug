@@ -43,18 +43,23 @@ public class Config {
       + "{|lNOT just chaos{|r Mods allow players and towns to enforce their own rules\n"
       + "{|lNOT just roleplay{|r Nobody pretends -- conflict is genuine and heated\n}|"
       + "    {|oBasic Mechanics{|r\n"
-      + "-The world is a square\n"
-      + "-Stretches 6k blocks across\n"
-      + "-500 block chat range\n"
-      + "-Respawn in random area unless you sleep\n"
+      + "-The world is a circle\n"
+      + "-1k block radius\n"
+      + "-250 block chat range\n"
+      + "-Respawn in random area if you have no bed\n"
+      + "-Custom terrain with large volcanic mountains\n"
       + "-Mobs spawn profusely\n"
       + "-1:1 Nether\n}|"
       + "   {|oBergeCraft Mods{|r\n"
       + "{|lCitadel{|r: Reinforces things so it takes numerous breaks to destroy them. Locks some things too.\n"
       + "{|lMore Info:{|r {|oVisual Guide:{|r imgur.com/BnlL2 {|oWiki Page:{|r tinyurl.com/citadelmod\n"
       + "{|oType \"/help citadel\" in chat to get commands\n}|"
-      + "   {|lExtra Hard Mode{|r: Increases mob difficulty, increases environmental damage, and removes branch mining\n"
+      + "   {|lExtra Hard Mode{|r: Increases mob difficulty, increases environmental damage, and changes mining tactics\n"
       + "{|lMore Info:{|r {|oWiki Page:{|r http://di3mex.github.io/ExtraHardMode/ \n}|"
+      + " {|lFactory Mod{|r: Factories process large amounts of material to produce goods. ALL smelting MUST be done by factory. Trading raw materials may be cheaper than producing your own.\n"
+      + "{|lMore Info:{|r {|oVisual Guide:{|r valadian.cloudapp.net/FactoryMod {|oWiki Page:{|r tinyurl.com/factorymod\n}|"
+      + "   {|lSmOres{|r: Changes the way ores and picks work. Gold acts as copper, coming between stone and iron in capability. All ores drop as their own blocks. No smelting in a furnace.\n"
+      + "{|lMore Info:{|r {|oWiki Page:{|r tinyurl.com/smoresmod\n}|"
       + "   {|lPrison Pearl{|r: Ender Pearls trap players in the end. Others can steal back your pearl and free you -- you always know where it is so they cannot hide it\n"
       + "{|lMore Info:{|r {|oVisual Guide:{|r imgur.com/XbhkK {|oWiki Page:{|r tinyurl.com/prisperl\n}|"
       + "   {|lJuke Alert{|r: Creates 'Juke' blocks that record player activity in radius. If you steal, grief, or trespass -- people will know about it & put a bounty for you to be pearled.\n"
@@ -67,7 +72,7 @@ public class Config {
       + "{|lMore Info:{|r {|oWiki Page:{|r tinyurl.com/humbugwiki\n}|"
       + "   {|oFurther Info{|r\n"
       + "Visit our subreddit at: {|oreddit.com/r/bergecraft{|r\n"
-      + "Has player made guides on other mods, towns, and general tips";
+      + "Our wiki has more detailed information on mods and server rules";
   private static final Iterable<String> compiled_book_text_ =
       Splitter.on("}|").split(book_text_.replaceAll("\\{\\|", "\u00A7"));
 
